@@ -25,6 +25,7 @@ namespace NATE
         static Camera camera;
         static TileManager tiles;
         static int count = 0;
+
         static void Main(string[] args)
         {
             Initialize();
@@ -52,15 +53,19 @@ namespace NATE
             window = new RenderWindow(new VideoMode(1280, 768), "Test", Styles.Default);
             window.SetFramerateLimit(60);
             window.SetTitle("NATE");
-            map = new Map(new Vector2i(32, 32), 6072, true);
+            tiles = new TileManager("assets\\tilemaps\\rpgtiles.png", 32);
+            //map = new Map(new Vector2i(32, 32), ((int)tiles.image.Size.X / tiles.tileSize) * ((int)tiles.image.Size.Y / tiles.tileSize), true); -- for random
+            map = new Map(new Vector2i(32, 32), ((int)tiles.image.Size.X / tiles.tileSize) * ((int)tiles.image.Size.Y / tiles.tileSize), false);
+            
             scaling = new Vector2f(4, 4);
             iMap = new MapInterface();
             textureCollection = new Texture[map.tileCount];
             camera = new Camera();
             camera.speed = 1000;
-            tiles = new TileManager("assets\\tilemaps\\tiles.png", 16);
 
             window.Closed += (s, a) => window.Close();
+            window.KeyPressed += (s, a) => { if (a.Code == Keyboard.Key.Z) { iMap.WriteMap("map0.ntm", map); } };
+
             dtClock.Start();
 
             iMap.WriteMap("map0.ntm", map);
@@ -80,16 +85,13 @@ namespace NATE
                     Sprite s = new Sprite(textureCollection[map.data[x, y]]);
                     float xPos = y * x * s.Texture.Size.X * scaling.X + camera.X;
                     float yPos = y * s.Texture.Size.Y * scaling.Y + camera.Y;
-                    //if (xPos > 0 && xPos < 1280)
-                    {
-                        s.Position = new Vector2f(x * s.Texture.Size.X * scaling.X + camera.X, y * s.Texture.Size.Y * scaling.Y + camera.Y);
-                        s.Scale = scaling;
-                        window.Draw(s);
-                    }
+                    s.Position = new Vector2f(x * s.Texture.Size.X * scaling.X + camera.X, y * s.Texture.Size.Y * scaling.Y + camera.Y);
+                    s.Scale = scaling;
+                    window.Draw(s);
                     count++;
                 }
             }
-            window.Draw(textFps);
+            window.Draw(textFps); 
         }
         
         static void Update(float dt)
@@ -101,9 +103,9 @@ namespace NATE
             textFps.Position = new Vector2f(10, 10);
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.W)) { if (camera.Y + camera.speed * dt > 0) { camera.Y = 0; } else { camera.Y += camera.speed * dt; } }
-            if (Keyboard.IsKeyPressed(Keyboard.Key.S)) { if (camera.Y - camera.speed * dt < -(map.size.Y * 16 * scaling.Y - window.Size.Y)) { camera.Y = -(map.size.Y * 16 * scaling.Y - window.Size.Y); } else { camera.Y -= camera.speed * dt; } }
+            if (Keyboard.IsKeyPressed(Keyboard.Key.S)) { if (camera.Y - camera.speed * dt < -(map.size.Y * tiles.tileSize * scaling.Y - window.Size.Y)) { camera.Y = -(map.size.Y * tiles.tileSize * scaling.Y - window.Size.Y); } else { camera.Y -= camera.speed * dt; } }
             if (Keyboard.IsKeyPressed(Keyboard.Key.A)) { if (camera.X + camera.speed * dt > 0) { camera.X = 0; } else { camera.X += camera.speed * dt; } }
-            if (Keyboard.IsKeyPressed(Keyboard.Key.D)) { if (camera.X - camera.speed * dt < -(map.size.X * 16 * scaling.X - window.Size.X)) { camera.X = -(map.size.X * 16 * scaling.X - window.Size.X); } else { camera.X -= camera.speed * dt; } }
+            if (Keyboard.IsKeyPressed(Keyboard.Key.D)) { if (camera.X - camera.speed * dt < -(map.size.X * tiles.tileSize * scaling.X - window.Size.X)) { camera.X = -(map.size.X * tiles.tileSize * scaling.X - window.Size.X); } else { camera.X -= camera.speed * dt; } }
         }
     }
 }
