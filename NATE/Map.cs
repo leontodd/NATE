@@ -7,6 +7,8 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using SFML.Window;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace NATE
 {
@@ -18,15 +20,32 @@ namespace NATE
             BinaryFormatter b = new BinaryFormatter();
             b.Serialize(s, map);
         }
-    }
 
-    [Serializable()]  
-    class Map : ISerializable
-    {
-        public Map(Vector2i mSize, int mTileCount, bool mRandom)
+        public Map ReadMap(string path)
         {
-            size = mSize;
-            tileCount = mTileCount;
+            
+            StreamReader s = File.OpenText(path);
+            dynamic o = JsonConvert.DeserializeObject(s.ReadToEnd());
+            JArray j = o["layers"][0]["data"];
+            int[] d1 = j.Select(jv => (int)jv).ToArray();
+            Map m = new Map(new Vector2i((int)o["width"], (int)o["height"]));
+            m.tileCount = (int)o["properties"]["tileCount"];
+            for (int x = 0; x < m.size.X; x++)
+            {
+                for (int y = 0; y < m.size.Y; y++)
+                {
+                    m.data[x, y] = d1[y * m.size.X + x] - 1;
+                }
+            }
+            return m;
+        }
+    }
+    class Map
+    {
+        public Map(Vector2i mSize, int mTileCount = 0, bool mRandom = false)
+        {
+            size.X = mSize.X;
+            size.Y = mSize.Y;
             data = new int[mSize.X, mSize.Y];
 
             if (mRandom == true)
@@ -40,35 +59,14 @@ namespace NATE
                     }
                 }
             }
-            else
-            {
-
-            }
         }
 
-        public Map(SerializationInfo info, StreamingContext ctxt)
-        {
-            byte[] id = (byte[])info.GetValue("id", typeof(byte[]));
-            byte version = (byte)info.GetValue("version", typeof(byte));
-            Vector2i size = new Vector2i((int)info.GetValue("sizeX", typeof(int)), (int)info.GetValue("sizeY", typeof(int)));
-            int tileCount = (int)info.GetValue("tileCount", typeof(int));
-            int[,] data = (int[,])info.GetValue("data", typeof(byte[,]));
-        }
-
-        public void GetObjectData(SerializationInfo info, StreamingContext ctxt)
-        {
-            info.AddValue("id", id);
-            info.AddValue("version", version);
-            info.AddValue("sizeX", size.X);
-            info.AddValue("sizeY", size.Y);
-            info.AddValue("tileCount", tileCount);
-            info.AddValue("data", data);
-        }
-
-        readonly byte[] id = {0xAE, 0x69, 0xAE};
-        const byte version = 0x00;
-        public readonly Vector2i size;
-        public readonly int tileCount;
+        public string id;
+        public float version;
+        public Vector2i size;
+        public int scale;
+        public int tilesize;
+        public int tileCount;
         public int[,] data;
     }
 }

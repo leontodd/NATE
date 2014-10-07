@@ -54,21 +54,22 @@ namespace NATE
             window.SetFramerateLimit(60);
             window.SetTitle("NATE");
             tiles = new TileManager("assets\\tilemaps\\rpgtiles.png", 32);
-            //map = new Map(new Vector2i(32, 32), ((int)tiles.image.Size.X / tiles.tileSize) * ((int)tiles.image.Size.Y / tiles.tileSize), true); -- for random
-            map = new Map(new Vector2i(32, 32), ((int)tiles.image.Size.X / tiles.tileSize) * ((int)tiles.image.Size.Y / tiles.tileSize), false);
-            
-            scaling = new Vector2f(4, 4);
             iMap = new MapInterface();
-            textureCollection = new Texture[map.tileCount];
+            //map = new Map(new Vector2i(32, 32), ((int)tiles.image.Size.X / tiles.tileSize) * ((int)tiles.image.Size.Y / tiles.tileSize), true); -- for random
+            //map = new Map(new Vector2i(32, 32), ((int)tiles.image.Size.X / tiles.tileSize) * ((int)tiles.image.Size.Y / tiles.tileSize), false); -- blank
+            map = iMap.ReadMap("map1.ntm");
+            
+            scaling = new Vector2f(2, 2);
+            textureCollection = new Texture[(tiles.image.Size.X / tiles.tileSize) * (tiles.image.Size.Y / tiles.tileSize)];
             camera = new Camera();
             camera.speed = 1000;
 
             window.Closed += (s, a) => window.Close();
             window.KeyPressed += (s, a) => { if (a.Code == Keyboard.Key.Z) { iMap.WriteMap("map0.ntm", map); } };
+            window.MouseWheelMoved += (s, a) => { scaling.X += a.Delta * 0.075f; scaling.Y += a.Delta * 0.075f; };
 
             dtClock.Start();
 
-            iMap.WriteMap("map0.ntm", map);
             for (int i = 0; i < (tiles.image.Size.X / tiles.tileSize) * (tiles.image.Size.Y / tiles.tileSize); i++)
             {
                 textureCollection[i] = tiles.GetTile(i);
@@ -82,6 +83,7 @@ namespace NATE
             {
                 for (int y = 0; y < map.size.Y; y++)
                 {
+
                     Sprite s = new Sprite(textureCollection[map.data[x, y]]);
                     float xPos = y * x * s.Texture.Size.X * scaling.X + camera.X;
                     float yPos = y * s.Texture.Size.Y * scaling.Y + camera.Y;
@@ -99,7 +101,7 @@ namespace NATE
             float fps = 0;
 
             fps = (1f / (dt));
-            textFps.DisplayedString = dt.ToString() + ", Camera: " + camera.X.ToString() + ", " + camera.Y.ToString();
+            textFps.DisplayedString = "Frametime: " + Math.Round(dt, 3) + ", Camera: " + ((int)camera.X).ToString() + ", " + ((int)camera.Y).ToString();
             textFps.Position = new Vector2f(10, 10);
 
             if (Keyboard.IsKeyPressed(Keyboard.Key.W)) { if (camera.Y + camera.speed * dt > 0) { camera.Y = 0; } else { camera.Y += camera.speed * dt; } }
